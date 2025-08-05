@@ -7,16 +7,15 @@ import org.apache.ibatis.reflection.wrapper.ObjectWrapperFactory;
 import java.util.Collection;
 import java.util.Map;
 
-public class MyStrictObjectWrapperFactory implements ObjectWrapperFactory {
+public class MybatisAdaptObjectWrapperFactory implements ObjectWrapperFactory {
     @Override
     public boolean hasWrapperFor(Object object) {
-        // 所有非 map 的对象都用我们的 wrapper
         return isJavaBean(object);
     }
 
     @Override
     public ObjectWrapper getWrapperFor(MetaObject metaObject, Object object) {
-        return new MyStrictColumnWrapper(metaObject, object);
+        return new MybatisAdaptColumnWrapper(metaObject, object);
     }
 
 

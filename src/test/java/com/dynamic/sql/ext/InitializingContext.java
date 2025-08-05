@@ -7,8 +7,7 @@ import com.dynamic.sql.core.SqlContext;
 import com.dynamic.sql.datasource.DataSourceProvider;
 import com.dynamic.sql.datasource.connection.ConnectionHolder;
 import com.dynamic.sql.datasource.connection.SimpleConnectionHandle;
-import com.dynamic.sql.ext.plugins.conversion.CustomWrapperFactory;
-import com.dynamic.sql.ext.plugins.conversion.MyStrictObjectWrapperFactory;
+import com.dynamic.sql.ext.plugins.conversion.MybatisAdaptObjectWrapperFactory;
 import com.dynamic.sql.ext.plugins.conversion.impl.FetchJsonObjectConverter;
 import com.dynamic.sql.plugins.exception.DefaultSqlErrorHint;
 import com.dynamic.sql.plugins.exception.ExceptionPlugin;
@@ -82,7 +81,7 @@ public class InitializingContext {
             Environment environment = new Environment("dev", new JdbcTransactionFactory(), dataSource);
             configuration.setEnvironment(environment);
 //            configuration.setObjectWrapperFactory(new CustomWrapperFactory());
-            configuration.setObjectWrapperFactory(new MyStrictObjectWrapperFactory());
+            configuration.setObjectWrapperFactory(new MybatisAdaptObjectWrapperFactory());
             //configuration.setMapUnderscoreToCamelCase(true);
             SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(configuration);
             sqlSession = sqlSessionFactory.openSession();
