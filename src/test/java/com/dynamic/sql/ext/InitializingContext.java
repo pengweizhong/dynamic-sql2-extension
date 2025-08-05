@@ -9,6 +9,7 @@ import com.dynamic.sql.datasource.connection.ConnectionHolder;
 import com.dynamic.sql.datasource.connection.SimpleConnectionHandle;
 import com.dynamic.sql.ext.plugins.conversion.MybatisAdaptObjectWrapperFactory;
 import com.dynamic.sql.ext.plugins.conversion.impl.FetchJsonObjectConverter;
+import com.dynamic.sql.ext.plugins.pagination.MybatisPageInterceptorPlugin;
 import com.dynamic.sql.plugins.exception.DefaultSqlErrorHint;
 import com.dynamic.sql.plugins.exception.ExceptionPlugin;
 import com.dynamic.sql.plugins.pagination.PageInterceptorPlugin;
@@ -71,18 +72,19 @@ public class InitializingContext {
         }
         if (sqlSession == null) {
             log.info("--------------------- sqlSession 初始化 ---------------------");
-            // ✅ 1. 配置数据源
+            // 1. 配置数据源
             DataSource dataSource = DataSourceProvider.getDefaultDataSourceMeta().getDataSource();
-            // ✅ 2. 加载 MyBatis 配置
+            // 2. 加载 MyBatis 配置
             InputStream configStream = Resources.getResourceAsStream("mybatis-config.xml");
             XMLConfigBuilder configBuilder = new XMLConfigBuilder(configStream);
             Configuration configuration = configBuilder.parse();
-            // ✅ 3. 设置数据源和环境
+            // 3. 设置数据源和环境
             Environment environment = new Environment("dev", new JdbcTransactionFactory(), dataSource);
             configuration.setEnvironment(environment);
 //            configuration.setObjectWrapperFactory(new CustomWrapperFactory());
             configuration.setObjectWrapperFactory(new MybatisAdaptObjectWrapperFactory());
             //configuration.setMapUnderscoreToCamelCase(true);
+            configuration.addInterceptor(new MybatisPageInterceptorPlugin());
             SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(configuration);
             sqlSession = sqlSessionFactory.openSession();
         }

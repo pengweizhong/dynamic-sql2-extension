@@ -4,9 +4,9 @@
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 
 <configuration>
-    <plugins>
-        <plugin interceptor="com.dynamic.sql.ext.plugins.pagination.MybatisPageInterceptorPlugin"/>
-    </plugins>
+<!--    <plugins>-->
+<!--        <plugin interceptor="com.dynamic.sql.ext.plugins.pagination.MybatisPageInterceptorPlugin"/>-->
+<!--    </plugins>-->
 
     <mappers>
         <mapper resource="mapper/UserMapper.xml"/>
