@@ -152,7 +152,7 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
 
     @Override
     public ExecutionControl beforeExecution(SqlStatementWrapper sqlStatementWrapper, Connection connection) {
-        return null;
+        return ExecutionControl.PROCEED;
     }
 
     @Override
