@@ -18,4 +18,17 @@ class MybatisPageInterceptorPluginTest extends InitializingMybatisContext {
         pageInfo.getRecords().forEach(System.out::println);
         System.out.println("分页结果：" + pageInfo);
     }
+
+    @Test
+    void testPage2() {
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        PageInfo<List<User>> pageInfo = PageHelper.ofMybatis(1, 5).selectPage(() -> mapper.queryUsers(""));
+        pageInfo.getRecords().forEach(System.out::println);
+        System.out.println("分页结果：" + pageInfo);
+
+        while (pageInfo.hasNextPage()) {
+            pageInfo.selectNextPage();
+            System.out.println("下一页的分页结果：" + pageInfo);
+        }
+    }
 }
