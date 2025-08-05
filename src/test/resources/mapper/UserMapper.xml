@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dynamic.sql.ext.mapper.UserMapper">
+    <select id="queryUsers" resultType="com.dynamic.sql.ext.entities.User">
+        SELECT * FROM users
+        <where>
+            <if test="name != null  ">
+                name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            limit 12
+        </where>
+    </select>
+</mapper>
