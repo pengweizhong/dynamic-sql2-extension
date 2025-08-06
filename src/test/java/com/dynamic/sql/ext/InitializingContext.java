@@ -14,6 +14,7 @@ import com.dynamic.sql.plugins.exception.DefaultSqlErrorHint;
 import com.dynamic.sql.plugins.exception.ExceptionPlugin;
 import com.dynamic.sql.plugins.pagination.PageInterceptorPlugin;
 import com.dynamic.sql.utils.ConverterUtils;
+import com.github.pagehelper.PageInterceptor;
 import com.google.gson.JsonObject;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.io.Resources;
@@ -85,6 +86,7 @@ public class InitializingContext {
             configuration.setObjectWrapperFactory(new MybatisAdaptObjectWrapperFactory());
             //configuration.setMapUnderscoreToCamelCase(true);
             configuration.addInterceptor(new MybatisPageInterceptorPlugin());
+            configuration.addInterceptor(new PageInterceptor());
             SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(configuration);
             sqlSession = sqlSessionFactory.openSession();
         }

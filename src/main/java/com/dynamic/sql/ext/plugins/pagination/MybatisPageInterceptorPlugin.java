@@ -17,6 +17,8 @@ import com.dynamic.sql.plugins.pagination.AbstractPage;
 import com.dynamic.sql.plugins.pagination.DefaultPagePluginType;
 import com.dynamic.sql.plugins.pagination.LocalPage;
 import com.dynamic.sql.plugins.pagination.PagePluginType;
+import org.apache.ibatis.cache.CacheKey;
+import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
@@ -28,20 +30,19 @@ import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * 目前只兼容MySQL的分页
  */
 @Intercepts({
-        @Signature(type = org.apache.ibatis.executor.Executor.class, method = "query", args = {
-                MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class
-        })
+        @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class}),
+        @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class, CacheKey.class, BoundSql.class}),
 })
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginType, Interceptor {
 
     @Override
@@ -51,16 +52,25 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
             //不分页，直接返回原结果
             return invocation.proceed();
         }
-
         // 1. 获取原始参数
-        MappedStatement ms = (MappedStatement) invocation.getArgs()[0];
-        Object paramObj = invocation.getArgs()[1];
-
-        BoundSql boundSql = ms.getBoundSql(paramObj);
-        String originalSql = boundSql.getSql().trim();
+        Object[] args = invocation.getArgs();
+        MappedStatement ms = (MappedStatement) args[0];
+        Object paramObj = args[1];
+        RowBounds rowBounds = (RowBounds) args[2];
+        ResultHandler resultHandler = (ResultHandler) args[3];
+        Executor executor = (Executor) invocation.getTarget();
+        BoundSql boundSql;
+        CacheKey cacheKey;
+        if (args.length == 4) {
+            boundSql = ms.getBoundSql(paramObj);
+            cacheKey = executor.createCacheKey(ms, paramObj, rowBounds, boundSql);
+        } else {
+            cacheKey = (CacheKey) args[4];
+            boundSql = (BoundSql) args[5];
+        }
         Long total = abstractPage.getCacheTotal();
         if (total == null) {
-            total = executeCountSql(originalSql, invocation);
+            total = executeCountSql(ms, paramObj, boundSql, executor, resultHandler);
         }
         //没有数据就没有必要继续执行
         if (total == 0) {
@@ -69,36 +79,30 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
         // 计算分页的偏移量 (pageIndex - 1) * pageSize
         int offset = (abstractPage.getPageIndex() - 1) * abstractPage.getPageSize();
         // 构造分页 SQL
+        String originalSql = boundSql.getSql().trim();
         String pageSql = "SELECT * FROM (" + originalSql + ") AS _PAGE_TEMP LIMIT " + offset + ", " + abstractPage.getPageSize();
         // 包装新的 BoundSql
-        BoundSql newBoundSql = new BoundSql(ms.getConfiguration(), pageSql,
-                boundSql.getParameterMappings(), paramObj);
+        BoundSql newBoundSql = new BoundSql(ms.getConfiguration(), pageSql, boundSql.getParameterMappings(), paramObj);
 
-        // 创建新的 MappedStatement
-        MappedStatement newMs = copyFromMappedStatement(ms, new BoundSqlSqlSource(newBoundSql), false);
-
-        // 替换参数并执行
-        invocation.getArgs()[0] = newMs;
-
-        return invocation.proceed();
+        //添加原始的 additionalParameters
+        copyAdditionalParameters(boundSql, newBoundSql);
+        return executor.query(ms, paramObj, RowBounds.DEFAULT, resultHandler, cacheKey, newBoundSql);
     }
 
-    private long executeCountSql(String originalSql, Invocation invocation) throws SQLException {
-        MappedStatement ms = (MappedStatement) invocation.getArgs()[0];
-        Object paramObj = invocation.getArgs()[1];
-
-        BoundSql boundSql = ms.getBoundSql(paramObj);
+    private long executeCountSql(MappedStatement ms, Object paramObj, BoundSql boundSql, Executor executor, ResultHandler resultHandler) throws SQLException {
         //  执行 count 查询
+        String originalSql = boundSql.getSql().trim();
         String countSql = "SELECT COUNT(*) FROM (" + originalSql + ") AS _COUNT_PAGE_TEMP";
         // 构造 count 用的 BoundSql
-        BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), countSql,
-                boundSql.getParameterMappings(), paramObj);
+        BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), countSql, boundSql.getParameterMappings(), paramObj);
+        //添加原始的 additionalParameters
+        copyAdditionalParameters(boundSql, countBoundSql);
+        CacheKey pageCacheKey = executor.createCacheKey(ms, paramObj, RowBounds.DEFAULT, countBoundSql);
         // 创建 count 的 MappedStatement
-        MappedStatement countMs = copyFromMappedStatement(ms, new BoundSqlSqlSource(countBoundSql), true);
-
+        MappedStatement countMs = copyFromMappedStatement(ms, new BoundSqlSqlSource(countBoundSql));
         // 执行 count 查询
-        org.apache.ibatis.executor.Executor executor = (org.apache.ibatis.executor.Executor) invocation.getTarget();
-        List<Object> countResultList = executor.query(countMs, paramObj, RowBounds.DEFAULT, null);
+        List<Object> countResultList = executor.query(countMs, paramObj, RowBounds.DEFAULT, resultHandler, pageCacheKey, countBoundSql);
+
         // 从结果中提取 count
         long total = ((Number) countResultList.get(0)).longValue();
         AbstractPage abstractPage = LocalPage.getCurrentPage();
@@ -107,12 +111,37 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
         return total;
     }
 
+    @SuppressWarnings("all")
+    public static void copyAdditionalParameters(BoundSql source, BoundSql target) {
+        try {
+            Field additionalParametersField = BoundSql.class.getDeclaredField("additionalParameters");
+            additionalParametersField.setAccessible(true);
+            Map<String, Object> sourceParams = (Map<String, Object>) additionalParametersField.get(source);
+            Map<String, Object> targetParams = (Map<String, Object>) additionalParametersField.get(target);
+            if (sourceParams != null && targetParams != null) {
+                targetParams.putAll(sourceParams);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to copy additionalParameters from BoundSql", e);
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static void setBoundSqlString(BoundSql boundSql, String newSql) {
+        try {
+            Field sql = BoundSql.class.getDeclaredField("sql");
+            sql.setAccessible(true);
+            sql.set(boundSql, newSql);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to copy additionalParameters from BoundSql", e);
+        }
+    }
 
     // 复制 MappedStatement
-    private MappedStatement copyFromMappedStatement(MappedStatement ms, SqlSource newSqlSource, boolean isCountQuery) {
+    private MappedStatement copyFromMappedStatement(MappedStatement ms, SqlSource newSqlSource) {
         MappedStatement.Builder builder = new MappedStatement.Builder(
-                ms.getConfiguration(), ms.getId() + (isCountQuery ? "_count" : ""), newSqlSource, ms.getSqlCommandType());
-
+                ms.getConfiguration(), ms.getId() + "Count", newSqlSource, ms.getSqlCommandType());
+        builder.keyColumn(Arrays.toString(ms.getKeyColumns()));
         builder.resource(ms.getResource());
         builder.fetchSize(ms.getFetchSize());
         builder.statementType(ms.getStatementType());
@@ -124,15 +153,13 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
         builder.cache(ms.getCache());
         builder.flushCacheRequired(ms.isFlushCacheRequired());
         builder.useCache(ms.isUseCache());
-
-        if (isCountQuery) {
-            List<ResultMap> resultMaps = Collections.singletonList(
-                    new ResultMap.Builder(ms.getConfiguration(), ms.getId() + "_count_result", Long.class, new ArrayList<>()).build()
-            );
-            builder.resultMaps(resultMaps);
-        } else {
-            builder.resultMaps(ms.getResultMaps());
-        }
+        builder.resultOrdered(ms.isResultOrdered());
+        builder.lang(ms.getLang());
+        builder.databaseId(ms.getDatabaseId());
+        List<ResultMap> resultMaps = Collections.singletonList(
+                new ResultMap.Builder(ms.getConfiguration(), ms.getId() + "CountResult", Long.class, new ArrayList<>()).build()
+        );
+        builder.resultMaps(resultMaps);
         return builder.build();
     }
 
@@ -152,7 +179,8 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
 
     @Override
     public ExecutionControl beforeExecution(SqlStatementWrapper sqlStatementWrapper, Connection connection) {
-        return null;
+        //IGNORE
+        return ExecutionControl.PROCEED;
     }
 
     @Override

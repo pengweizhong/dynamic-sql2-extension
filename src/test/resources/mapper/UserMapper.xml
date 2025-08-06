@@ -10,7 +10,6 @@
             <if test="name != null  ">
                 name LIKE CONCAT('%', #{name}, '%')
             </if>
-            limit 2
         </where>
     </select>
 </mapper>

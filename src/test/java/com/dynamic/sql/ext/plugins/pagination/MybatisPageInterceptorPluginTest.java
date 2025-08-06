@@ -5,6 +5,8 @@ import com.dynamic.sql.ext.entities.User;
 import com.dynamic.sql.ext.mapper.UserMapper;
 import com.dynamic.sql.plugins.pagination.PageHelper;
 import com.dynamic.sql.plugins.pagination.PageInfo;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.page.PageMethod;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -36,5 +38,31 @@ class MybatisPageInterceptorPluginTest extends InitializingContext {
             pageInfo.selectNextPage();
             System.out.println("下一页的分页结果：" + pageInfo);
         }
+    }
+
+    @Test
+    void testPage3() {
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        Page<Object> objects = PageMethod.startPage(1, 2).doSelectPage(() -> mapper.queryUsers("Jerry"));
+        System.out.println(objects);
+    }
+
+    //嵌套测试
+    @Test
+    void testPage4() {
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        Page<Object> objects = PageMethod.startPage(1, 2).doSelectPage(() ->
+                PageHelper.ofMybatis(1, 5).selectPage(() -> mapper.queryUsers("Jerry")));
+        System.out.println(objects);
+
+    }
+
+    //嵌套测试
+    @Test
+    void testPage5() {
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        PageInfo<Page<Object>> jerry = PageHelper.ofMybatis(1, 5).selectPage(() ->
+                PageMethod.startPage(1, 2).doSelectPage(() -> mapper.queryUsers("Jerry")));
+        System.out.println(jerry);
     }
 }
