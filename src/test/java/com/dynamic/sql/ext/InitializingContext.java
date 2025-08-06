@@ -82,9 +82,9 @@ public class InitializingContext {
             // 3. 设置数据源和环境
             Environment environment = new Environment("dev", new JdbcTransactionFactory(), dataSource);
             configuration.setEnvironment(environment);
-//            configuration.setObjectWrapperFactory(new CustomWrapperFactory());
+            //添加dynamic-sql2包装映射
             configuration.setObjectWrapperFactory(new MybatisAdaptObjectWrapperFactory());
-            //configuration.setMapUnderscoreToCamelCase(true);
+            //添加分页插件
             configuration.addInterceptor(new MybatisPageInterceptorPlugin());
             configuration.addInterceptor(new PageInterceptor());
             SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(configuration);
