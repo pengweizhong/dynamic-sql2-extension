@@ -12,4 +12,12 @@
             </if>
         </where>
     </select>
+    <select id="queryUsersSet" resultType="com.dynamic.sql.ext.entities.User">
+        SELECT * FROM users
+        <where>
+            <if test="name != null  ">
+                name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+    </select>
 </mapper>

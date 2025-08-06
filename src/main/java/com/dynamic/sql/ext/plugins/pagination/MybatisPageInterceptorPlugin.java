@@ -74,7 +74,7 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
         }
         //没有数据就没有必要继续执行
         if (total == 0) {
-            return ExecutionControl.SKIP;
+            return new ArrayList<>();
         }
         // 计算分页的偏移量 (pageIndex - 1) * pageSize
         int offset = (abstractPage.getPageIndex() - 1) * abstractPage.getPageSize();

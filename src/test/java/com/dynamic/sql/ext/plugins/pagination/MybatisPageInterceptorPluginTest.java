@@ -10,6 +10,7 @@ import com.github.pagehelper.page.PageMethod;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 class MybatisPageInterceptorPluginTest extends InitializingContext {
     @Test
@@ -22,7 +23,15 @@ class MybatisPageInterceptorPluginTest extends InitializingContext {
     @Test
     void testPage() {
         UserMapper mapper = sqlSession.getMapper(UserMapper.class);
-        PageInfo<List<User>> pageInfo = PageHelper.ofMybatis(1, 5).selectPage(() -> mapper.queryUsers(""));
+        PageInfo<List<User>> pageInfo = PageHelper.ofMybatis(1, 2).selectPage(() -> mapper.queryUsers("1111111111"));
+        pageInfo.getRecords().forEach(System.out::println);
+        System.out.println("分页结果：" + pageInfo);
+    }
+
+    @Test
+    void testPageSet() {
+        UserMapper mapper = sqlSession.getMapper(UserMapper.class);
+        PageInfo<Set<User>> pageInfo = PageHelper.ofMybatis(1, 2).selectPage(() -> mapper.queryUsersSet("1111111111"));
         pageInfo.getRecords().forEach(System.out::println);
         System.out.println("分页结果：" + pageInfo);
     }
