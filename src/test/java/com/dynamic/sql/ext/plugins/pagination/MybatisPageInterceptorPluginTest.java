@@ -23,7 +23,7 @@ class MybatisPageInterceptorPluginTest extends InitializingContext {
     @Test
     void testPage() {
         UserMapper mapper = sqlSession.getMapper(UserMapper.class);
-        PageInfo<List<User>> pageInfo = PageHelper.ofMybatis(1, 2).selectPage(() -> mapper.queryUsers("1111111111"));
+        PageInfo<List<User>> pageInfo = PageHelper.ofMybatis(1, 2).selectPage(() -> mapper.queryUsers("Jerry"));
         pageInfo.getRecords().forEach(System.out::println);
         System.out.println("分页结果：" + pageInfo);
     }

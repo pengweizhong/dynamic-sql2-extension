@@ -6,14 +6,62 @@
     <artifactId>dynamic-sql2-extension</artifactId>
     <version>0.1.4</version>
     <name>dynamic-sql2-extension</name>
-    <description>dynamic-sql2-extension</description>
+    <description>Dynamic-SQL2 的拓展插件，如Mybatis分页，兼容 Bean 映射规则等</description>
+    <inceptionYear>2025</inceptionYear>
+    <url>https://github.com/pengweizhong/dynamic-sql2-extension</url>
+
     <properties>
         <java.version>1.8</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <dynamic-sql.version>0.1.4</dynamic-sql.version>
         <mybatis.version>3.5.10</mybatis.version>
     </properties>
+
+    <developers>
+        <developer>
+            <name>pengweizhong</name>
+            <email>pengwz@hotmail.com</email>
+            <timezone>+8</timezone>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <tag>HEAD</tag>
+        <url>https://github.com/pengweizhong/dynamic-sql2-extension</url>
+        <connection>scm:git:https://github.com/pengweizhong/dynamic-sql2-extension.git</connection>
+        <developerConnection>scm:git:git@github.com:pengweizhong/dynamic-sql2-extension.git</developerConnection>
+    </scm>
+
+    <organization>
+        <name>Dynamic-SQL</name>
+        <url>https://www.dynamic-sql.com</url>
+    </organization>
+
+    <distributionManagement>
+        <site>
+            <url>https://www.dynamic-sql.com</url>
+        </site>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>releases</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>com.dynamic-sql</groupId>
@@ -153,18 +201,18 @@
                     </gpgArguments>
                 </configuration>
             </plugin>
-            <!--            <plugin>-->
-            <!--                <groupId>org.sonatype.central</groupId>-->
-            <!--                <artifactId>central-publishing-maven-plugin</artifactId>-->
-            <!--                <version>0.6.0</version>-->
-            <!--                <extensions>true</extensions>-->
-            <!--                <configuration>-->
-            <!--                    <publishingServerId>central</publishingServerId>-->
-            <!--                    <autoPublish>true</autoPublish>-->
-            <!--                    &lt;!&ndash;插件会等待直到组件通过 Sonatype Central 的验证过程（确保符合 Maven Central 的要求，如 POM 文件完整性、签名等）。&ndash;&gt;-->
-            <!--                    <waitUntil>validated</waitUntil>-->
-            <!--                </configuration>-->
-            <!--            </plugin>-->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.6.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <!--插件会等待直到组件通过 Sonatype Central 的验证过程（确保符合 Maven Central 的要求，如 POM 文件完整性、签名等）。-->
+                    <waitUntil>validated</waitUntil>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
