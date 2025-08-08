@@ -11,6 +11,7 @@ package com.dynamic.sql.ext.plugins.pagination;
 
 import com.dynamic.sql.core.database.PreparedSql;
 import com.dynamic.sql.core.dml.SqlStatementWrapper;
+import com.dynamic.sql.exception.DynamicSqlException;
 import com.dynamic.sql.interceptor.ExecutionControl;
 import com.dynamic.sql.interceptor.SqlInterceptor;
 import com.dynamic.sql.plugins.pagination.AbstractPage;
@@ -122,7 +123,7 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
                 targetParams.putAll(sourceParams);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to copy additionalParameters from BoundSql", e);
+            throw new DynamicSqlException("Failed to copy additionalParameters from BoundSql", e);
         }
     }
 
@@ -133,7 +134,7 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
             sql.setAccessible(true);
             sql.set(boundSql, newSql);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to copy additionalParameters from BoundSql", e);
+            throw new DynamicSqlException("Failed to copy additionalParameters from BoundSql", e);
         }
     }
 
