@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dynamic-sql</groupId>
     <artifactId>dynamic-sql2-extension</artifactId>
-    <version>0.1.4</version>
+    <version>0.1.5</version>
     <name>dynamic-sql2-extension</name>
     <description>Dynamic-SQL2 的拓展插件，如Mybatis分页，兼容 Bean 映射规则等</description>
     <inceptionYear>2025</inceptionYear>
@@ -74,6 +74,11 @@
             <artifactId>mybatis</artifactId>
             <version>${mybatis.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>4.9</version>
         </dependency>
 
         <!---->

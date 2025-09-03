@@ -18,6 +18,11 @@ import com.dynamic.sql.plugins.pagination.AbstractPage;
 import com.dynamic.sql.plugins.pagination.DefaultPagePluginType;
 import com.dynamic.sql.plugins.pagination.LocalPage;
 import com.dynamic.sql.plugins.pagination.PagePluginType;
+import com.dynamic.sql.utils.CollectionUtils;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.WithItem;
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
@@ -69,33 +74,70 @@ public class MybatisPageInterceptorPlugin implements SqlInterceptor, PagePluginT
             cacheKey = (CacheKey) args[4];
             boundSql = (BoundSql) args[5];
         }
+        // 2. 解析 SQL 语句
+        Select select = (Select) CCJSqlParserUtil.parse(boundSql.getSql());
+        // 提取With
+        StringBuilder withSqlBuilder = withStringBuilder(select);
+        String executeSql = selectCountSql(select, withSqlBuilder);
         Long total = abstractPage.getCacheTotal();
         if (total == null) {
-            total = executeCountSql(ms, paramObj, boundSql, executor, resultHandler);
+            total = executeCountSql(ms, paramObj, boundSql, executeSql, executor, resultHandler);
         }
         //没有数据就没有必要继续执行
         if (total == 0) {
             return new ArrayList<>();
         }
-        // 计算分页的偏移量 (pageIndex - 1) * pageSize
-        int offset = (abstractPage.getPageIndex() - 1) * abstractPage.getPageSize();
-        // 构造分页 SQL
-        String originalSql = boundSql.getSql().trim();
-        String pageSql = "SELECT * FROM (" + originalSql + ") AS _PAGE_TEMP LIMIT " + offset + ", " + abstractPage.getPageSize();
+        String pageSql = selectPageSql(select, withSqlBuilder, abstractPage);
         // 包装新的 BoundSql
         BoundSql newBoundSql = new BoundSql(ms.getConfiguration(), pageSql, boundSql.getParameterMappings(), paramObj);
-
         //添加原始的 additionalParameters
         copyAdditionalParameters(boundSql, newBoundSql);
         return executor.query(ms, paramObj, RowBounds.DEFAULT, resultHandler, cacheKey, newBoundSql);
     }
 
-    private long executeCountSql(MappedStatement ms, Object paramObj, BoundSql boundSql, Executor executor, ResultHandler resultHandler) throws SQLException {
+    private StringBuilder withStringBuilder(Select select) {
+        // 解析原始SQL
+        PlainSelect plainSelect = select.getPlainSelect();
+        List<WithItem> withItemsList = plainSelect.getWithItemsList();
+        StringBuilder withSqlBuilder = new StringBuilder();
+        if (CollectionUtils.isNotEmpty(withItemsList)) {
+            withSqlBuilder.append("WITH ");
+            // 拼接 WITH 子句
+            for (int i = 0; i < withItemsList.size(); i++) {
+                WithItem withItem = withItemsList.get(i);
+                withSqlBuilder.append(withItem.toString());
+                if (i < withItemsList.size() - 1) {
+                    withSqlBuilder.append(", ");
+                }
+            }
+            // 移除 WITH 子句
+            select.setWithItemsList(null);
+        }
+        //拼接 COUNT 查询
+        return withSqlBuilder;
+    }
+
+    private String selectCountSql(Select select, StringBuilder withSqlBuilder) {
+        //拼接 COUNT 查询
+        return withSqlBuilder + " SELECT COUNT(1) FROM (" + select + ") AS _COUNT_PAGE_TEMP";
+    }
+
+    private String selectPageSql(Select select, StringBuilder withSqlBuilder, AbstractPage abstractPage) {
+        // 计算分页的偏移量 (pageIndex - 1) * pageSize
+        int offset = (abstractPage.getPageIndex() - 1) * abstractPage.getPageSize();
+        // 构造分页 SQL
+        return withSqlBuilder + " SELECT * FROM (" + select + ") AS _PAGE_TEMP LIMIT " + offset + ", " + abstractPage.getPageSize();
+    }
+
+    private long executeCountSql(MappedStatement ms,
+                                 Object paramObj,
+                                 BoundSql boundSql,
+                                 String executeSql,
+                                 Executor executor,
+                                 ResultHandler resultHandler) throws SQLException {
         //  执行 count 查询
-        String originalSql = boundSql.getSql().trim();
-        String countSql = "SELECT COUNT(*) FROM (" + originalSql + ") AS _COUNT_PAGE_TEMP";
         // 构造 count 用的 BoundSql
-        BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), countSql, boundSql.getParameterMappings(), paramObj);
+        BoundSql countBoundSql = new BoundSql(ms.getConfiguration(), executeSql, boundSql.getParameterMappings(), paramObj);
         //添加原始的 additionalParameters
         copyAdditionalParameters(boundSql, countBoundSql);
         CacheKey pageCacheKey = executor.createCacheKey(ms, paramObj, RowBounds.DEFAULT, countBoundSql);
