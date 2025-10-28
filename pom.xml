@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dynamic-sql</groupId>
     <artifactId>dynamic-sql2-extension</artifactId>
-    <version>0.1.5</version>
+    <version>0.1.6</version>
     <name>dynamic-sql2-extension</name>
     <description>Dynamic-SQL2 的拓展插件，如Mybatis分页，兼容 Bean 映射规则等</description>
     <inceptionYear>2025</inceptionYear>
@@ -16,7 +16,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dynamic-sql.version>0.1.4</dynamic-sql.version>
+        <dynamic-sql.version>0.1.6</dynamic-sql.version>
         <mybatis.version>3.5.10</mybatis.version>
     </properties>
 
