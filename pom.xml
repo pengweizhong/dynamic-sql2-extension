@@ -4,14 +4,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dynamic-sql</groupId>
     <artifactId>dynamic-sql2-extension</artifactId>
-    <version>0.1.4</version>
+    <version>0.1.6</version>
     <name>dynamic-sql2-extension</name>
     <description>dynamic-sql2-extension</description>
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dynamic-sql.version>0.1.4</dynamic-sql.version>
+        <dynamic-sql.version>0.1.6</dynamic-sql.version>
         <mybatis.version>3.5.10</mybatis.version>
     </properties>
     <dependencies>
