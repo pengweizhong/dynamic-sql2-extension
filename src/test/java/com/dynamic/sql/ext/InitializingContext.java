@@ -3,6 +3,7 @@ package com.dynamic.sql.ext;
 import com.dynamic.sql.context.SqlContextHelper;
 import com.dynamic.sql.context.properties.SchemaProperties;
 import com.dynamic.sql.context.properties.SqlContextProperties;
+import com.dynamic.sql.context.properties.SqlLogProperties;
 import com.dynamic.sql.core.SqlContext;
 import com.dynamic.sql.datasource.DataSourceProvider;
 import com.dynamic.sql.datasource.connection.ConnectionHolder;
@@ -12,10 +13,12 @@ import com.dynamic.sql.ext.plugins.conversion.impl.FetchJsonObjectConverter;
 import com.dynamic.sql.ext.plugins.pagination.MybatisPageInterceptorPlugin;
 import com.dynamic.sql.plugins.exception.DefaultSqlErrorHint;
 import com.dynamic.sql.plugins.exception.ExceptionPlugin;
+import com.dynamic.sql.plugins.logger.impl.DefaultSqlLogger;
 import com.dynamic.sql.plugins.pagination.PageInterceptorPlugin;
 import com.dynamic.sql.utils.ConverterUtils;
 import com.github.pagehelper.PageInterceptor;
 import com.google.gson.JsonObject;
+import jdk.jfr.internal.LogLevel;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.mapping.Environment;
@@ -58,10 +61,11 @@ public class InitializingContext {
             //schemaProperties.setDatabaseProductVersion("11.0.0.1");
             schemaProperties.setUseAsInQuery(true);
             //打印SQL
-            SchemaProperties.PrintSqlProperties printSqlProperties = new SchemaProperties.PrintSqlProperties();
-            printSqlProperties.setPrintSql(true);
-            printSqlProperties.setPrintDataSourceName(true);
-            schemaProperties.setPrintSqlProperties(printSqlProperties);
+            SqlLogProperties sqlLogProperties = new SqlLogProperties();
+            sqlLogProperties.setEnabled(true);
+            sqlLogProperties.setPrintExecutionTime(true);
+            sqlLogProperties.setLogger(new DefaultSqlLogger());
+            sqlLogProperties.setLevel(LogLevel.DEBUG);
             sqlContextProperties.addSchemaProperties(schemaProperties);
             //内置分页
             sqlContextProperties.addInterceptor(new PageInterceptorPlugin());

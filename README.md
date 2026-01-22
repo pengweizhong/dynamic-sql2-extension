@@ -4,7 +4,7 @@
     <dependency>
         <groupId>com.dynamic-sql</groupId>
         <artifactId>dynamic-sql2-extension</artifactId>
-        <version>0.1.6</version>
+        <version>0.2.0</version>
     </dependency>
 ```
 配置环境
